@@ -11,7 +11,8 @@ import 'package:firebase_firestore/src/firebase/firestore/auth/firebase_auth_cre
 import 'package:firebase_firestore/src/firebase/firestore/collection_reference.dart';
 import 'package:firebase_firestore/src/firebase/firestore/core/database_info.dart';
 import 'package:firebase_firestore/src/firebase/firestore/core/firestore_client.dart';
-import 'package:firebase_firestore/src/firebase/firestore/core/transaction.dart' as core;
+import 'package:firebase_firestore/src/firebase/firestore/core/transaction.dart'
+    as core;
 import 'package:firebase_firestore/src/firebase/firestore/document_reference.dart';
 import 'package:firebase_firestore/src/firebase/firestore/firebase_firestore_settings.dart';
 import 'package:firebase_firestore/src/firebase/firestore/firestore_multi_db_component.dart';
@@ -33,7 +34,8 @@ import 'package:meta/meta.dart';
 @publicApi
 class FirebaseFirestore {
   @visibleForTesting
-  FirebaseFirestore(this.databaseId, this._asyncQueue, this.firebaseApp, this.client)
+  FirebaseFirestore(
+      this.databaseId, this._asyncQueue, this.firebaseApp, this.client)
       : dataConverter = UserDataConverter(databaseId);
 
   static const String _tag = 'FirebaseFirestore';
@@ -56,17 +58,20 @@ class FirebaseFirestore {
 
   @publicApi
   static Future<FirebaseFirestore> getInstance(FirebaseApp app,
-      {String database = DatabaseId.defaultDatabaseId, OpenDatabase openDatabase}) async {
+      {String database = DatabaseId.defaultDatabaseId,
+      OpenDatabase openDatabase}) async {
     checkNotNull(app, 'Provided FirebaseApp must not be null.');
-    checkNotNull(openDatabase, 'Provided openDatabase must not be null.');
 
-    final FirestoreMultiDbComponent component = FirestoreMultiDbComponent(app, app.getAuthProvider);
+    final FirestoreMultiDbComponent component =
+        FirestoreMultiDbComponent(app, app.getAuthProvider);
     checkNotNull(component, 'Firestore component is not present.');
 
-    final FirebaseFirestore firestore = await component.get(database, openDatabase);
+    final FirebaseFirestore firestore =
+        await component.get(database, openDatabase);
     return firestore;
   }
 
+  ///If [openDatabase] is omitted local memory persistence will be disabled.
   static Future<FirebaseFirestore> newInstance(FirebaseApp app, String database,
       [InternalTokenProvider authProvider, OpenDatabase openDatabase]) async {
     final String projectId = app.options.projectId;
@@ -79,7 +84,8 @@ class FirebaseFirestore {
 
     CredentialsProvider provider;
     if (authProvider == null) {
-      Log.d(_tag, 'Firebase Auth not available, falling back to unauthenticated usage.');
+      Log.d(_tag,
+          'Firebase Auth not available, falling back to unauthenticated usage.');
       provider = EmptyCredentialsProvider();
     } else {
       provider = FirebaseAuthCredentialsProvider(authProvider);
@@ -91,7 +97,9 @@ class FirebaseFirestore {
     // need to include it in the persistence key.
     final String persistenceKey = app.name;
 
-    final FirebaseFirestoreSettings settings = FirebaseFirestoreSettings();
+    final FirebaseFirestoreSettings settings =
+        FirebaseFirestoreSettings(persistenceEnabled: openDatabase != null);
+
     final FirestoreClient client = await FirestoreClient.initialize(
       DatabaseInfo(
         databaseId,
@@ -132,7 +140,8 @@ class FirebaseFirestore {
   DocumentReference document(String documentPath) {
     checkNotNull(documentPath, 'Provided document path must not be null.');
     _ensureClientConfigured();
-    return DocumentReference.forPath(ResourcePath.fromString(documentPath), this);
+    return DocumentReference.forPath(
+        ResourcePath.fromString(documentPath), this);
   }
 
   /// Executes the given [updateFunction] and then attempts to commit the changes applied within the
@@ -140,14 +149,16 @@ class FirebaseFirestore {
   /// will be retried. If it fails to commit after 5 attempts, the transaction will fail.
   ///
   /// [updateFunction] the function to execute within the transaction context.
-  Future<TResult> runTransaction<TResult>(TransactionCallback<TResult> updateFunction) {
+  Future<TResult> runTransaction<TResult>(
+      TransactionCallback<TResult> updateFunction) {
     _ensureClientConfigured();
 
     // We wrap the function they provide in order to
     // 1. Use internal implementation classes for Transaction,
     // 2. Convert exceptions they throw into Futures, and
     // 3. Run the user callback on the user queue.
-    Future<TResult> wrappedUpdateFunction(core.Transaction internalTransaction) {
+    Future<TResult> wrappedUpdateFunction(
+        core.Transaction internalTransaction) {
       return updateFunction(Transaction(internalTransaction, this));
     }
 
@@ -207,7 +218,8 @@ class FirebaseFirestore {
   void validateReference(DocumentReference docRef) {
     checkNotNull(docRef, 'Provided DocumentReference must not be null.');
     if (docRef.firestore != this) {
-      throw ArgumentError('Provided document reference is from a different Firestore instance.');
+      throw ArgumentError(
+          'Provided document reference is from a different Firestore instance.');
     }
   }
 }
